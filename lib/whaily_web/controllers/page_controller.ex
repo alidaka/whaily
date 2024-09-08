@@ -1,9 +1,16 @@
 defmodule WhailyWeb.PageController do
-  use WhailyWeb, :controller
+  use WhailyWeb, :live_view
 
-  def home(conn, _params) do
-    # The home page is often custom made,
-    # so skip the default app layout.
-    render(conn, :home, layout: false)
+  def render(assigns) do
+    ~H"""
+    <div>
+      hallo "<%= @myvar %>"
+    </div>
+    """
+  end
+
+  def mount(_params, _session, socket) do
+    myvar = "babbys first vra"
+    {:ok, assign(socket, :myvar, myvar)}
   end
 end
