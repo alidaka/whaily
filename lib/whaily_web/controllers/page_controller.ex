@@ -3,14 +3,16 @@ defmodule WhailyWeb.PageController do
 
   def render(assigns) do
     ~H"""
-    <div>
-      hallo "<%= @myvar %>"
-    </div>
+    <%= for item <- @list do %>
+      <div>
+        hello "<%= item %>"
+      </div>
+    <% end %>
     """
   end
 
   def mount(_params, _session, socket) do
-    myvar = "babbys first vra"
-    {:ok, assign(socket, :myvar, myvar)}
+    list = ["babbys first vra", 64, "third var"]
+    {:ok, assign(socket, :list, list)}
   end
 end
