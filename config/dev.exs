@@ -14,7 +14,10 @@ config :whaily, WhailyWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "e7mmps9gPof9Ghm+GRskcZwXhTpLrbqQMhX3UrNTJRsIxDQq5DCygry4ZddZkV8y",
-  watchers: []
+  watchers: [
+    esbuild: {Esbuild, :install_and_run, [:whaily, ~w(--sourcemap=inline --watch)]},
+    tailwind: {Tailwind, :install_and_run, [:whaily, ~w(--watch)]}
+  ]
 
 # ## SSL Support
 #
