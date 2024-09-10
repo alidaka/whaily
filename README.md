@@ -1,18 +1,42 @@
 # Whaily
 
-To start your Phoenix server:
+## Local execution
+```
+# install and setup dependencies
+> mix setup
 
-  * Run `mix setup` to install and setup dependencies
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+# run locally
+> mix phx.server
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+# or, debug locally
+> iex -S mix phx.server
+```
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+Visit [`localhost:4000`](http://localhost:4000)
 
-## Learn more
+## Deployment
+```
+flyctl deploy
+```
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+Visit [whaily.fly.dev](whaily.fly.dev)
+
+## Meta thoughts at SHA `d969b73`
+This commit is the first full vertical slice of value:
+* Backend gets a meaningful piece of data
+* Frontend loads, receives that data, and shows it
+* Deploys to a live site
+
+This took about 5.5 hours, ~half of which was spent learning Phoenix: setting up esbuild/asset pipeline after not doing so OOB, then learning how to parse json.
+
+Next up:
+* Add more useful/fun data
+    * Weather data
+    * Election data?
+* Improve presentation
+    * Fine tune food truck today vs tomorrow presentation
+    * Make more visual separation, styling, ...
+* Improve operations
+    * `fly launch` included a Github Action - needs auth
+    * Set up logging, observability
+    * Use my own domain
