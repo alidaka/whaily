@@ -44,18 +44,20 @@ defmodule WhailyWeb.PageController do
       {:error, reason} ->
         {:error, "Request error: #{inspect(reason)}"}
     end
-  end
-
-  def fetch_temp do
-    "TBD..."
-  end
+ end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div :if={@temperature.loading}>loading temp...</div>
-    <div :if={temp = @temperature.ok? && @temperature.result}>Forecast: <%= temp %></div>
-    <div>
+    <div class="p-8 shadow-md">
+      <.async_result :let={temp} assign={@temperature}>
+          <:loading>loading temp...</:loading>
+          <:failed :let={failure}>error: <%= inspect failure %></:failed>
+          Forecast: <%= temp %>
+        </.async_result>
+    </div>
+
+    <div class="p-8 shadow-md">
       <a href="https://www.chuckshopshop.com/greenwood">
         <.async_result :let={truck} assign={@truck_name}>
           <:loading>loading truck...</:loading>
