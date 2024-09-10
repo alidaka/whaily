@@ -1,10 +1,19 @@
 # Whaily
 
 ## Local execution
+### Setup
 ```
 # install and setup dependencies
 > mix setup
 
+# set up environment variables
+> cp .envrc.example .envrc
+> vim envrc #...
+> direnv allow
+```
+
+### Run
+```
 # run locally
 > mix phx.server
 
