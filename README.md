@@ -28,6 +28,8 @@ Visit [`localhost:4000`](http://localhost:4000)
 flyctl deploy
 ```
 
+Set secrets via `fly secrets set FOO=bar`
+
 Visit [whaily.fly.dev](whaily.fly.dev)
 
 ## Meta thoughts at SHA `d969b73`
