@@ -40,3 +40,8 @@ Next up:
     * `fly launch` included a Github Action - needs auth
     * Set up logging, observability
     * Use my own domain
+
+# Attribution
+Thank you to:
+* Google Calendar for Chuck's Hop Shop data
+* [Open-Meteo](https://open-meteo.com/) for weather data
