@@ -84,8 +84,8 @@ defmodule WhailyWeb.PageController do
           <:loading>loading weather...</:loading>
           <:failed :let={failure}>error: <%= inspect failure %></:failed>
           <div>
-            <span>Min: <%= weather.min %></span>
-            <span>Max: <%= weather.max %></span>
+            <span>Low: <%= weather.min %></span>
+            <span>High: <%= weather.max %></span>
             <span>Precip: <%= weather.precip %>%</span>
           </div>
           <div>
