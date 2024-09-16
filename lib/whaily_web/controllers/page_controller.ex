@@ -5,17 +5,14 @@ defmodule WhailyWeb.PageController do
 
   @impl true
   def mount(_params, _session, socket) do
-    Logger.info "mount"
-    if connected?(socket) do Logger.info "mount connected!!!!" end
     {:ok,
       socket
       |> assign(others: []) # breadcrumbs in case they become useful later
-      |> assign_async(:truck_name, fn -> fetch_truck() end)
+      |> assign_async(:trucks, fn -> fetch_truck() end)
       |> assign_async(:weather, fn -> fetch_weather() end)}
   end
 
   defp fetch_truck do
-    Logger.info "fetch_truck let's go"
     #url = "https://clients6.google.com/calendar/v3/calendars/tihhbg3gp215ruuo0nsp3qafgs@group.calendar.google.com/events?calendarId=tihhbg3gp215ruuo0nsp3qafgs%40group.calendar.google.com&singleEvents=true&eventTypes=default&eventTypes=focusTime&eventTypes=outOfOffice&timeZone=America%2FLos_Angeles&maxAttendees=1&maxResults=250&sanitizeHtml=true&timeMin=2024-09-08T00%3A00%3A00-07%3A00&timeMax=2024-10-15T00%3A00%3A00-07%3A00&key=AIzaSyBNlYH01_9Hc5S1J9vuFmu2nUqBZJNAXxs&%24unique=gc237"
     today = DateTime.now!("America/Los_Angeles")
     today_iso = DateTime.to_iso8601(today)
@@ -28,13 +25,15 @@ defmodule WhailyWeb.PageController do
 
     get_response = get(url, fn
       response ->
-        response["items"]
-        |> Enum.map(fn i -> i["summary"] end)
-        |> Enum.join("; ")
+        Enum.map(response["items"], fn i -> %{
+          start: ~s(#{String.slice(i["start"]["dateTime"], 5, 5)} #{String.slice(i["start"]["dateTime"], 11, 5)}),
+          end: String.slice(i["end"]["dateTime"], 11, 5),
+          name: i["summary"]}
+          end)
     end)
 
     case get_response do
-      {:ok, result} -> {:ok, %{truck_name: result}}
+      {:ok, result} -> {:ok, %{trucks: Enum.sort_by(result, fn t -> t.start end)}}
       {:error, error} -> {:error, error}
     end
   end
@@ -59,6 +58,7 @@ defmodule WhailyWeb.PageController do
   end
 
   defp get(url, json_fn) do
+    Logger.info url
     case Finch.build(:get, url) |> Finch.request(Whaily.Finch) do
       {:ok, %Finch.Response{status: 200, body: body}} ->
         case Jason.decode(body) do
@@ -79,26 +79,42 @@ defmodule WhailyWeb.PageController do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="p-8 shadow-md">
+    <div class="p-8 shadow-md bg-sky-100">
       <.async_result :let={weather} assign={@weather}>
           <:loading>loading weather...</:loading>
           <:failed :let={failure}>error: <%= inspect failure %></:failed>
-          <span>Min: <%= weather.min %></span>
-          <span>Max: <%= weather.max %></span>
-          <span>Current: <%= weather.current %></span>
-          <span>Precip: <%= weather.precip %>%</span>
+          <div>
+            <span>Min: <%= weather.min %></span>
+            <span>Max: <%= weather.max %></span>
+            <span>Precip: <%= weather.precip %>%</span>
+          </div>
+          <div>
+            <span>Current: <%= weather.current %></span>
+          </div>
         </.async_result>
     </div>
 
-    <div class="p-8 shadow-md">
-      <a href="https://www.chuckshopshop.com/greenwood">
-        <.async_result :let={truck} assign={@truck_name}>
-          <:loading>loading truck...</:loading>
-          <:failed :let={failure}>error: <%= inspect failure %></:failed>
-          <%= truck %>
-        </.async_result>
-      </a>
-    </div>
+    <.async_result :let={trucks} assign={@trucks}>
+      <:loading>
+        <div class="p-8 shadow-md bg-green-100">
+          loading trucks...
+        </div>
+      </:loading>
+      <:failed :let={failure}>
+        <div class="p-8 shadow-md bg-green-100">
+          error: <%= inspect failure %>
+        </div>
+      </:failed>
+      <%= for truck <- trucks do %>
+        <div class="p-8 shadow-md bg-green-100">
+          <a href="https://www.chuckshopshop.com/greenwood">
+            <div><%= truck.start %> - <%= truck.end %></div>
+            <div><%= truck.name %></div>
+          </a>
+        </div>
+      <% end %>
+    </.async_result>
+
     <%= for item <- @others do %>
       <div>
         hello "<%= item %>"
