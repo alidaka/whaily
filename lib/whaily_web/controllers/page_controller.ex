@@ -154,8 +154,10 @@ defmodule WhailyWeb.PageController do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="p-8 shadow-md bg-sky-100">
-      <.async_result :let={weather} assign={@weather}>
+    <div class="m-4">
+      <h2>Weather</h2>
+      <div class="p-8 shadow-md bg-sky-100">
+        <.async_result :let={weather} assign={@weather}>
           <:loading>loading weather...</:loading>
           <:failed :let={failure}>error: <%= inspect failure %></:failed>
           <div>
@@ -167,68 +169,79 @@ defmodule WhailyWeb.PageController do
             <span>Current: <%= weather.current %></span>
           </div>
         </.async_result>
+      </div>
     </div>
 
-    <.async_result :let={trucks} assign={@trucks}>
-      <:loading>
-        <div class="p-8 shadow-md bg-orange-100">
-          loading trucks...
-        </div>
-      </:loading>
-      <:failed :let={failure}>
-        <div class="p-8 shadow-md bg-orange-100">
-          error: <%= inspect failure %>
-        </div>
-      </:failed>
-      <%= for truck <- trucks do %>
-        <div class="p-8 shadow-md bg-orange-100">
-          <a href="https://www.chuckshopshop.com/greenwood">
-            <div><%= truck.start %> - <%= truck.end %></div>
-            <div><%= truck.name %></div>
-          </a>
-        </div>
-      <% end %>
-    </.async_result>
-
-    <.async_result :let={fresh_hops} assign={@fresh_hops}>
-      <:loading>
-        <div class="p-8 shadow-md bg-green-100">
-          loading fresh hops...
-        </div>
-      </:loading>
-      <:failed :let={failure}>
-        <div class="p-8 shadow-md bg-green-100">
-          error: <%= inspect failure %>
-        </div>
-      </:failed>
-      <%= for tap <- fresh_hops do %>
-        <div class="p-8 shadow-md bg-green-100">
-          <a href="https://taplists.web.app/?store=GW">
-            <div><%= tap.name %></div>
-            <div><%= tap.origin %> - <%= tap.serving %></div>
-          </a>
-        </div>
-      <% end %>
-    </.async_result>
-
-    <div id="buses" phx-update="stream" class="contents">
-      <div
-        class="p-8 shadow-md bg-red-100"
-        :for={{dom_id, stop} <- @streams.buses}
-        id={dom_id}
-      >
-        <%= if stop.data do %>
-          <div>
-            <%= stop.data.intersection %> (<%= stop.data.direction %>)
+    <div class="m-4">
+      <h2>Chuck's Food</h2>
+      <.async_result :let={trucks} assign={@trucks}>
+        <:loading>
+          <div class="p-8 shadow-md bg-orange-100">
+            loading trucks...
           </div>
-          <div>
-            <%= for bus <- Enum.sort_by(stop.data.buses, fn bus -> bus.eta end) do %>
-              <span class="bg-red-200 mx-[4px]">
-                <%= bus.short_name %>: <%= bus.eta %>
-              </span>
-            <% end %>
+        </:loading>
+        <:failed :let={failure}>
+          <div class="p-8 shadow-md bg-orange-100">
+            error: <%= inspect failure %>
+          </div>
+        </:failed>
+        <%= for truck <- trucks do %>
+          <div class="p-8 shadow-md bg-orange-100">
+            <a href="https://www.chuckshopshop.com/greenwood">
+              <div><%= truck.start %> - <%= truck.end %></div>
+              <div><%= truck.name %></div>
+            </a>
           </div>
         <% end %>
+      </.async_result>
+    </div>
+
+    <div class="m-4">
+      <h2>Chucks Fresh Hops</h2>
+      <div class="grid grid-flow-row grid-cols-2">
+        <.async_result :let={fresh_hops} assign={@fresh_hops}>
+          <:loading>
+            <div class="p-4 shadow-md bg-green-100">
+              loading fresh hops...
+            </div>
+          </:loading>
+          <:failed :let={failure}>
+            <div class="p-4 shadow-md bg-green-100">
+              error: <%= inspect failure %>
+            </div>
+          </:failed>
+          <%= for tap <- fresh_hops do %>
+            <div class="p-4 shadow-md bg-green-100 max-w-64">
+              <a href="https://taplists.web.app/?store=GW">
+                <div><%= tap.name %> - <%= tap.origin %></div>
+              </a>
+            </div>
+          <% end %>
+        </.async_result>
+      </div>
+    </div>
+
+    <div class="m-4">
+      <h2>Buses</h2>
+      <div id="buses" phx-update="stream" class="contents">
+        <div
+          class="m-2 p-4 shadow-md bg-red-100"
+          :for={{dom_id, stop} <- @streams.buses}
+          id={dom_id}
+        >
+          <%= if stop.data do %>
+            <div>
+              <%= stop.data.intersection %> (<%= stop.data.direction %>)
+            </div>
+            <div class="flex flex-row space-x-4">
+              <%= for bus <- Enum.sort_by(stop.data.buses, fn bus -> bus.eta end) do %>
+                <div class="font-bold">
+                  <span class="bg-red-200"><%= bus.short_name %>: </span><span class="bg-gray-100"><%= bus.eta %></span>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
     """
