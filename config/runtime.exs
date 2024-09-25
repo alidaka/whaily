@@ -39,7 +39,7 @@ if config_env() == :prod do
   config :whaily, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :whaily, WhailyWeb.Endpoint,
-    check_origin: ["whaily.lidaka.io", "whaily.fly.dev"],
+    check_origin: ["https://whaily.lidaka.io", "https://whaily.fly.dev"],
     url: [host: host, port: 443, scheme: "https"],
     http: [
       # Enable IPv6 and bind on all interfaces.
