@@ -9,6 +9,7 @@ defmodule WhailyWeb.PageController do
       socket
       |> assign_async(:trucks, fn -> fetch_truck() end)
       |> assign_async(:weather, fn -> fetch_weather() end)
+      |> assign_async(:fresh_hops, fn -> fetch_fresh_hops() end)
       |> fetch_buses_async()}
   end
 
@@ -22,6 +23,26 @@ defmodule WhailyWeb.PageController do
     Enum.reduce(stop_ids, socket, fn (stop, socket) ->
       start_async(socket, {:bus_handler, stop}, fn -> fetch_stop(stop) end)
     end)
+  end
+
+  defp fetch_fresh_hops do
+    url = ~s(https://taplists.web.app/data?menu=GW)
+
+    get_response = get(url, fn response ->
+      response
+      |> Enum.map(fn tap -> %{
+        name: tap["beer"],
+        origin: tap["origin"],
+        serving: tap["serving"],
+        style: tap["type"]}
+      end)
+      |> Enum.filter(fn tap -> String.contains?(String.downcase(tap.name), "fresh hop") end)
+    end)
+
+    case get_response do
+      {:ok, result} -> {:ok, %{fresh_hops: result}}
+      {:error, error} -> {:error, error}
+    end
   end
 
   defp fetch_truck do
@@ -150,17 +171,17 @@ defmodule WhailyWeb.PageController do
 
     <.async_result :let={trucks} assign={@trucks}>
       <:loading>
-        <div class="p-8 shadow-md bg-green-100">
+        <div class="p-8 shadow-md bg-orange-100">
           loading trucks...
         </div>
       </:loading>
       <:failed :let={failure}>
-        <div class="p-8 shadow-md bg-green-100">
+        <div class="p-8 shadow-md bg-orange-100">
           error: <%= inspect failure %>
         </div>
       </:failed>
       <%= for truck <- trucks do %>
-        <div class="p-8 shadow-md bg-green-100">
+        <div class="p-8 shadow-md bg-orange-100">
           <a href="https://www.chuckshopshop.com/greenwood">
             <div><%= truck.start %> - <%= truck.end %></div>
             <div><%= truck.name %></div>
@@ -169,7 +190,26 @@ defmodule WhailyWeb.PageController do
       <% end %>
     </.async_result>
 
-    <!-- TODO: fresh hops -->
+    <.async_result :let={fresh_hops} assign={@fresh_hops}>
+      <:loading>
+        <div class="p-8 shadow-md bg-green-100">
+          loading fresh hops...
+        </div>
+      </:loading>
+      <:failed :let={failure}>
+        <div class="p-8 shadow-md bg-green-100">
+          error: <%= inspect failure %>
+        </div>
+      </:failed>
+      <%= for tap <- fresh_hops do %>
+        <div class="p-8 shadow-md bg-green-100">
+          <a href="https://taplists.web.app/?store=GW">
+            <div><%= tap.name %></div>
+            <div><%= tap.origin %> - <%= tap.serving %></div>
+          </a>
+        </div>
+      <% end %>
+    </.async_result>
 
     <div id="buses" phx-update="stream" class="contents">
       <div
