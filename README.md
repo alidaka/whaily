@@ -42,13 +42,11 @@ This took about 5.5 hours, ~half of which was spent learning Phoenix: setting up
 
 Next up:
 * Add more useful/fun data
-    * Weather data
     * Election data?
+    * Fresh hops
 * Improve presentation
-    * Fine tune food truck today vs tomorrow presentation
     * Make more visual separation, styling, ...
 * Improve operations
-    * `fly launch` included a Github Action - needs auth
     * Set up logging, observability
     * Use my own domain
 
