@@ -30,7 +30,7 @@ flyctl deploy
 
 Set secrets via `fly secrets set FOO=bar`
 
-Visit [whaily.lidaka.io](whaily.lidaka.io) (or [whaily.fly.dev](whaily.fly.dev))
+Visit [whaily.lidaka.io](https://whaily.lidaka.io) (or [whaily.fly.dev](https://whaily.fly.dev))
 
 ## Meta thoughts at SHA `d969b73`
 This commit is the first full vertical slice of value:
