@@ -43,9 +43,7 @@ This took about 5.5 hours, ~half of which was spent learning Phoenix: setting up
 Next up:
 * Add more useful/fun data
     * Election data?
-    * Fresh hops
 * Improve presentation
-    * Make more visual separation, styling, ...
 * Improve operations
     * Set up logging, observability
     * Use my own domain
