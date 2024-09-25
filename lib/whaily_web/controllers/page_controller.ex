@@ -154,9 +154,10 @@ defmodule WhailyWeb.PageController do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="m-4">
+
+    <div class="section">
       <h2>Weather</h2>
-      <div class="p-8 shadow-md bg-sky-100">
+      <div class="card bg-sky-100">
         <.async_result :let={weather} assign={@weather}>
           <:loading>loading weather...</:loading>
           <:failed :let={failure}>error: <%= inspect failure %></:failed>
@@ -172,21 +173,21 @@ defmodule WhailyWeb.PageController do
       </div>
     </div>
 
-    <div class="m-4">
+    <div class="section">
       <h2>Chuck's Food</h2>
       <.async_result :let={trucks} assign={@trucks}>
         <:loading>
-          <div class="p-8 shadow-md bg-orange-100">
+          <div class="card bg-orange-100">
             loading trucks...
           </div>
         </:loading>
         <:failed :let={failure}>
-          <div class="p-8 shadow-md bg-orange-100">
+          <div class="card bg-orange-100">
             error: <%= inspect failure %>
           </div>
         </:failed>
         <%= for truck <- trucks do %>
-          <div class="p-8 shadow-md bg-orange-100">
+          <div class="card bg-orange-100">
             <a href="https://www.chuckshopshop.com/greenwood">
               <div><%= truck.start %> - <%= truck.end %></div>
               <div><%= truck.name %></div>
@@ -196,36 +197,11 @@ defmodule WhailyWeb.PageController do
       </.async_result>
     </div>
 
-    <div class="m-4">
-      <h2>Chucks Fresh Hops</h2>
-      <div class="grid grid-flow-row grid-cols-2">
-        <.async_result :let={fresh_hops} assign={@fresh_hops}>
-          <:loading>
-            <div class="p-4 shadow-md bg-green-100">
-              loading fresh hops...
-            </div>
-          </:loading>
-          <:failed :let={failure}>
-            <div class="p-4 shadow-md bg-green-100">
-              error: <%= inspect failure %>
-            </div>
-          </:failed>
-          <%= for tap <- fresh_hops do %>
-            <div class="p-4 shadow-md bg-green-100 max-w-64">
-              <a href="https://taplists.web.app/?store=GW">
-                <div><%= tap.name %> - <%= tap.origin %></div>
-              </a>
-            </div>
-          <% end %>
-        </.async_result>
-      </div>
-    </div>
-
-    <div class="m-4">
+    <div class="section">
       <h2>Buses</h2>
       <div id="buses" phx-update="stream" class="contents">
         <div
-          class="m-2 p-4 shadow-md bg-red-100"
+          class="card bg-red-100"
           :for={{dom_id, stop} <- @streams.buses}
           id={dom_id}
         >
@@ -244,6 +220,32 @@ defmodule WhailyWeb.PageController do
         </div>
       </div>
     </div>
+
+    <div class="section">
+      <h2>Chucks Fresh Hops</h2>
+      <div class="grid grid-flow-row grid-cols-2">
+        <.async_result :let={fresh_hops} assign={@fresh_hops}>
+          <:loading>
+            <div class="card bg-green-100">
+              loading fresh hops...
+            </div>
+          </:loading>
+          <:failed :let={failure}>
+            <div class="card bg-green-100">
+              error: <%= inspect failure %>
+            </div>
+          </:failed>
+          <%= for tap <- fresh_hops do %>
+            <div class="card bg-green-100 max-w-64">
+              <a href="https://taplists.web.app/?store=GW">
+                <div><%= tap.name %> - <%= tap.origin %></div>
+              </a>
+            </div>
+          <% end %>
+        </.async_result>
+      </div>
+    </div>
+
     """
   end
 end
