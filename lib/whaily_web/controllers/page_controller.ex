@@ -178,7 +178,7 @@ defmodule WhailyWeb.PageController do
       <h2>Weather</h2>
       <div class="card bg-sky-100">
         <.async_result :let={weather} assign={@weather}>
-          <:loading>loading weather...</:loading>
+          <:loading>checking weather...</:loading>
           <:failed :let={failure}>error: <%= inspect failure %></:failed>
           <div>
             <span>Low: <%= weather.min %></span>
@@ -197,7 +197,7 @@ defmodule WhailyWeb.PageController do
       <.async_result :let={trucks} assign={@trucks}>
         <:loading>
           <div class="card bg-orange-100">
-            loading trucks...
+            parking trucks...
           </div>
         </:loading>
         <:failed :let={failure}>
