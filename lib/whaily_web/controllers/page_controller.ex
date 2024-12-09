@@ -9,7 +9,7 @@ defmodule WhailyWeb.PageController do
       socket
       |> assign_async(:trucks, fn -> fetch_truck() end)
       |> assign_async(:weather, fn -> fetch_weather() end)
-      |> assign_async(:fresh_hops, fn -> fetch_fresh_hops() end)
+      |> assign_async(:beers, fn -> fetch_beers() end)
       |> fetch_buses_async()}
   end
 
@@ -25,7 +25,25 @@ defmodule WhailyWeb.PageController do
     end)
   end
 
-  defp fetch_fresh_hops do
+  defp beer_reducer(beers) do
+    fresh_hop_filter = %{title: "Fresh Hops", filter: fn tap -> String.contains?(String.downcase(tap.name), "fresh hop") end}
+    dark_filter = %{title: "Dark Beers", filter: fn tap -> tap.color != nil && String.downcase(tap.color) == "orange" end}
+    hazy_filter = %{title: "Hazies", filter: fn tap -> String.contains?(String.downcase(tap.name), "hazy") end}
+    #default_filter = %{title: "Beers", filter: fn tap -> tap end}
+
+    ordered_filters = [fresh_hop_filter, dark_filter, hazy_filter]
+
+    {:ok, Enum.reduce_while(ordered_filters, beers, fn (fltr, all_beers) ->
+      filtered_results = Enum.filter(all_beers, &(fltr.filter.(&1)))
+      if !Enum.empty?(filtered_results) do
+        {:halt, %{title: fltr.title, taps: filtered_results}}
+      else
+        {:cont, all_beers}
+      end
+    end)}
+  end
+
+  defp fetch_beers do
     url = ~s(https://taplists.web.app/data?menu=GW)
 
     get_response = get(url, fn response ->
@@ -34,14 +52,15 @@ defmodule WhailyWeb.PageController do
         name: tap["beer"],
         origin: tap["origin"],
         serving: tap["serving"],
+        color: tap["color"],
         style: tap["type"]}
       end)
-      |> Enum.filter(fn tap -> String.contains?(String.downcase(tap.name), "fresh hop") end)
     end)
 
-    case get_response do
-      {:ok, result} -> {:ok, %{fresh_hops: result}}
-      {:error, error} -> {:error, error}
+    with {:ok, result} <- get_response,
+         {:ok, beer_result} <- beer_reducer(result)
+    do
+      {:ok, %{beers: beer_result}}
     end
   end
 
@@ -222,28 +241,30 @@ defmodule WhailyWeb.PageController do
     </div>
 
     <div class="section">
-      <h2>Chucks Fresh Hops</h2>
-      <div class="grid grid-flow-row grid-cols-2">
-        <.async_result :let={fresh_hops} assign={@fresh_hops}>
-          <:loading>
-            <div class="card bg-green-100">
-              loading fresh hops...
-            </div>
-          </:loading>
-          <:failed :let={failure}>
-            <div class="card bg-green-100">
-              error: <%= inspect failure %>
-            </div>
-          </:failed>
-          <%= for tap <- fresh_hops do %>
+      <.async_result :let={beers} assign={@beers}>
+        <:loading>
+          <h2>Chuck's Beers</h2>
+          <div class="card bg-green-100">
+            pouring taps...
+          </div>
+        </:loading>
+        <:failed :let={failure}>
+          <h2>Chuck's Beers</h2>
+          <div class="card bg-green-100">
+            error: <%= inspect failure %>
+          </div>
+        </:failed>
+        <h2>Chuck's <%= beers.title %></h2>
+        <div class="grid grid-flow-row grid-cols-2">
+          <%= for tap <- beers.taps do %>
             <div class="card bg-green-100 max-w-64">
               <a href="https://taplists.web.app/?store=GW">
                 <div><%= tap.name %> - <%= tap.origin %></div>
               </a>
             </div>
           <% end %>
-        </.async_result>
-      </div>
+        </div>
+      </.async_result>
     </div>
 
     """
