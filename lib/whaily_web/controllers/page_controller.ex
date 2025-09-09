@@ -91,13 +91,33 @@ defmodule WhailyWeb.PageController do
   defp fetch_weather do
     lat = System.get_env("WEATHER_LAT")
     long = System.get_env("WEATHER_LONG")
-    url = ~s(https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{long}&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=America%2FLos_Angeles&forecast_days=1)
+    url = ~s(https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{long}&current=temperature_2m&hourly=temperature_2m,precipitation_probability&past_days=1&forecast_days=2&temperature_unit=fahrenheit&timezone=America%2FLos_Angeles)
 
     get_response = get(url, fn response ->
-      %{max: hd(response["daily"]["temperature_2m_max"]),
-        min: hd(response["daily"]["temperature_2m_min"]),
-        current: response["current"]["temperature_2m"],
-        precip: hd(response["daily"]["precipitation_probability_max"])}
+      # get the past two hours and next 14 (16h total window)
+      # per original inspection, one point per hour, from midnight to midnight
+      # current time sometimes has minutes, so just match to the hour - e.g. "2025-09-08T19:15"
+      current_time_prefix = String.slice(response["current"]["time"], 0..-3//1)
+      idx_now = response["hourly"]["time"] |> Enum.find_index(&(String.starts_with?(&1, current_time_prefix)))
+      idx_start = idx_now - 2
+      temp_data = response["hourly"]["temperature_2m"] |> Enum.slice(idx_start, 2 + 1 + 14)
+      precip_data = response["hourly"]["precipitation_probability"] |> Enum.slice(idx_start, 2 + 1 + 14)
+      # give the frontend just the 24h value
+      short_times = response["hourly"]["time"]
+                    |> Enum.slice(idx_start, 2 + 1 + 14)
+                    |> Enum.map(&(String.slice(&1, 11..12)))
+                    |> Enum.map(&String.to_integer/1)
+
+      current_time_tokens = response["current"]["time"]
+                            |> String.slice(-5..-1)
+                            |> String.split(":")
+      current_time_decimal = String.to_integer(hd(current_time_tokens)) + (String.to_integer(hd(tl(current_time_tokens))) / 60.0)
+
+      %{temp: temp_data,
+        precip: precip_data,
+        short_times: short_times,
+        current_time: current_time_decimal,
+        current_temp: response["current"]["temperature_2m"]}
     end)
 
     case get_response do
@@ -180,14 +200,75 @@ defmodule WhailyWeb.PageController do
         <.async_result :let={weather} assign={@weather}>
           <:loading>checking weather...</:loading>
           <:failed :let={failure}>error: <%= inspect failure %></:failed>
-          <div>
-            <span>Low: <%= weather.min %></span>
-            <span>High: <%= weather.max %></span>
-            <span>Precip: <%= weather.precip %>%</span>
-          </div>
-          <div>
-            <span>Current: <%= weather.current %></span>
-          </div>
+          <canvas id="weather_chart" phx-hook=".WeatherChart" data-weather={weather && Jason.encode!(weather)}></canvas>
+          <script :type={Phoenix.LiveView.ColocatedHook} name=".WeatherChart">
+            export default {
+              mounted() {
+                const data = JSON.parse(this.el.dataset.weather);
+
+                new Chart(this.el, {
+                  type: 'line',
+                  data: {
+                    labels: data.short_times,
+                    datasets: [
+                      { data: data.temp, yAxisID: 'y_temp', borderColor: '#ff6384' },
+                      { data: data.precip, yAxisID: 'y_precip', borderColor: '#36a2eb' }
+                    ]
+                  },
+                  options: {
+                    plugins: {
+                      legend: { display: false },
+                      annotation: {
+                        annotations: {
+                          x: {
+                            type: 'line',
+                            scaleID: 'x',
+                            label: {
+                              content: data.current_temp,
+                              display: true,
+                              backgroundColor: 'rgba(0,0,0,.5)'
+                            },
+                            value: data.current_time,
+                            endValue: data.current_time,
+                            borderColor: 'rgba(0,0,0,.4)',
+                            borderWidth: 2
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        type: 'linear',
+                        min: Math.min(...data.short_times),
+                        max:Math.max(...data.short_times)
+                      },
+                      y_temp: {
+                        type: 'linear',
+                        position: 'left',
+                        ticks: {
+                          color: '#ff6384',
+                          callback: function(value, index, ticks) { return value + '°'; }
+                        },
+                        min: Math.floor(Math.min(...data.temp) - 5),
+                        max: Math.ceil(Math.max(...data.temp) + 5),
+                      },
+                      y_precip: {
+                        type: 'linear',
+                        position: 'right',
+                        ticks: {
+                          color: '#36a2eb',
+                          callback: function(value, index, ticks) { return value + '%'; }
+                        },
+                        grid: { drawOnChartArea: false },
+                        min: 0,
+                        max: 100,
+                      }
+                    }
+                  }
+                });
+              }
+            }
+          </script>
         </.async_result>
       </div>
     </div>
