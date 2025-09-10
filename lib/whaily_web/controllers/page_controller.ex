@@ -206,10 +206,18 @@ defmodule WhailyWeb.PageController do
               mounted() {
                 const data = JSON.parse(this.el.dataset.weather);
 
+                // kludge to stop messing with time/labels/annotation
+                var count = 0;
+                const labels = data.short_times.map(t => {
+                  if (t === 0) count++;
+                  return count ? t + 24 : t;
+                });
+                const annotationValue = data.current_time < labels[0] ? data.current_time + 24 : data.current_time;
+
                 new Chart(this.el, {
                   type: 'line',
                   data: {
-                    labels: data.short_times,
+                    labels: labels,
                     datasets: [
                       { data: data.temp, yAxisID: 'y_temp', borderColor: '#ff6384' },
                       { data: data.precip, yAxisID: 'y_precip', borderColor: '#36a2eb' }
@@ -228,8 +236,8 @@ defmodule WhailyWeb.PageController do
                               display: true,
                               backgroundColor: 'rgba(0,0,0,.5)'
                             },
-                            value: data.current_time,
-                            endValue: data.current_time,
+                            value: annotationValue,
+                            endValue: annotationValue,
                             borderColor: 'rgba(0,0,0,.4)',
                             borderWidth: 2
                           }
@@ -239,8 +247,11 @@ defmodule WhailyWeb.PageController do
                     scales: {
                       x: {
                         type: 'linear',
-                        min: Math.min(...data.short_times),
-                        max:Math.max(...data.short_times)
+                        min: labels[0],
+                        max: labels.at(-1),
+                        ticks: {
+                          callback: function(value, index, ticks) { return value % 24; }
+                        }
                       },
                       y_temp: {
                         type: 'linear',
