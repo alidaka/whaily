@@ -26,6 +26,7 @@ defmodule WhailyWeb.PageController do
   end
 
   defp beer_reducer(beers) do
+    # TODO: Chuck's seems to prefix '-' or '_' for unavailable beers - probably just-tapped rather than on-deck
     fresh_hop_filter = %{title: "Fresh Hops", filter: fn tap -> String.contains?(String.downcase(tap.name), "fresh hop") end}
     dark_filter = %{title: "Dark Beers", filter: fn tap -> tap.color != nil && String.downcase(tap.color) == "orange" end}
     hazy_filter = %{title: "Hazies", filter: fn tap -> String.contains?(String.downcase(tap.name), "hazy") end}
