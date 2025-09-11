@@ -1,5 +1,13 @@
 # Whaily
 
+## Attribution
+### Thank you to:
+* Google Calendar for Chuck's Hop Shop data
+* [Open-Meteo](https://open-meteo.com/) for weather data
+
+### This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.
+Their Terms of Use are available for review [here](https://fred.stlouisfed.org/docs/api/terms_of_use.html)
+
 ## Local execution
 ### Setup
 ```
@@ -47,7 +55,3 @@ Next up:
 * Improve operations
     * Set up logging, observability
 
-# Attribution
-Thank you to:
-* Google Calendar for Chuck's Hop Shop data
-* [Open-Meteo](https://open-meteo.com/) for weather data

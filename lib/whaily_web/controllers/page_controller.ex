@@ -10,7 +10,35 @@ defmodule WhailyWeb.PageController do
       |> assign_async(:trucks, fn -> fetch_truck() end)
       |> assign_async(:weather, fn -> fetch_weather() end)
       |> assign_async(:beers, fn -> fetch_beers() end)
+      |> assign_async(:bond_yields, fn -> fetch_bond_yields() end)
       |> fetch_buses_async()}
+  end
+
+  defp fetch_bond_yields do
+    key = System.get_env("FRED_KEY")
+    # TODO: weekends are omitted, holidays are date="."; need to think on ensuring time is to scale
+    history_days = 600
+    url = ~s(https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&api_key=#{key}&file_type=json&sort_order=desc&limit=#{history_days})
+
+    get_response = get(url, fn response ->
+      response["observations"]
+      |> Enum.map(fn observation ->
+        rate = case Float.parse(observation["value"]) do
+          {val, _} -> val
+          :error -> nil
+        end
+
+        %{
+          date: observation["date"],
+          rate: rate}
+      end)
+      |> Enum.reverse
+    end)
+
+    case get_response do
+      {:ok, result} -> {:ok, %{bond_yields: result}}
+      {:error, error} -> {:error, error}
+    end
   end
 
   defp fetch_buses_async(socket) do
@@ -201,6 +229,7 @@ defmodule WhailyWeb.PageController do
         <.async_result :let={weather} assign={@weather}>
           <:loading>checking weather...</:loading>
           <:failed :let={failure}>error: <%= inspect failure %></:failed>
+
           <canvas id="weather_chart" phx-hook=".WeatherChart" data-weather={weather && Jason.encode!(weather)}></canvas>
           <script :type={Phoenix.LiveView.ColocatedHook} name=".WeatherChart">
             export default {
@@ -281,6 +310,7 @@ defmodule WhailyWeb.PageController do
               }
             }
           </script>
+
         </.async_result>
       </div>
     </div>
@@ -358,6 +388,62 @@ defmodule WhailyWeb.PageController do
           <% end %>
         </div>
       </.async_result>
+    </div>
+
+    <!-- [date, rate] -->
+    <div class="section">
+      <h2>10y Treasury Bond Yield Rates</h2>
+      <div class="card bg-yellow-100">
+      <.async_result :let={bond_yields} assign={@bond_yields}>
+        <:loading>calculating rates...</:loading>
+        <:failed :let={failure}>error: <%= inspect failure %></:failed>
+
+
+        <canvas id="bond_chart"
+          phx-hook=".BondChart"
+          data-bond-yields={bond_yields && Jason.encode!(bond_yields)}>
+        </canvas>
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".BondChart">
+          export default {
+            mounted() {
+              const data = JSON.parse(this.el.dataset.bondYields);
+
+              new Chart(this.el, {
+                type: 'line',
+                data: {
+                  datasets: [{
+                    data: data,
+                    cubicInterpolationMode: 'monotone',
+                    spanGaps: true
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  parsing: {
+                    xAxisKey: 'date',
+                    yAxisKey: 'rate'
+                  },
+                  plugins: {
+                    legend: { display: false }
+                  },
+                  elements: {
+                    point: { pointStyle: false }
+                  },
+                  scales: {
+                    x: {
+                      ticks: {
+                        callback: function(value, index) { return data[index].date.substring(5) }
+                      }
+                    }
+                  }
+                }
+              });
+            }
+          }
+        </script>
+
+      </.async_result>
+      </div>
     </div>
 
     """
