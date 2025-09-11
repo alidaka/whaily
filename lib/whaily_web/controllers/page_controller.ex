@@ -248,12 +248,22 @@ defmodule WhailyWeb.PageController do
                   type: 'line',
                   data: {
                     labels: labels,
-                    datasets: [
-                      { data: data.temp, yAxisID: 'y_temp', borderColor: '#ff6384' },
-                      { data: data.precip, yAxisID: 'y_precip', borderColor: '#36a2eb' }
-                    ]
+                    datasets: [{
+                        data: data.temp,
+                        yAxisID: 'y_temp',
+                        tension: 0.4,
+                        borderColor: '#ff6384'
+                      }, {
+                        data: data.precip,
+                        yAxisID: 'y_precip',
+                        tension: 0.4,
+                        borderColor: '#36a2eb'
+                      }]
                   },
                   options: {
+                    elements: {
+                      point: { pointStyle: false }
+                    },
                     plugins: {
                       legend: { display: false },
                       annotation: {
