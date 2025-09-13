@@ -408,11 +408,13 @@ defmodule WhailyWeb.PageController do
         <:loading>calculating rates...</:loading>
         <:failed :let={failure}>error: <%= inspect failure %></:failed>
 
+        <div class="w-[80vw]">
+          <canvas id="bond_chart"
+            phx-hook=".BondChart"
+            data-bond-yields={bond_yields && Jason.encode!(bond_yields)}>
+          </canvas>
+        </div>
 
-        <canvas id="bond_chart"
-          phx-hook=".BondChart"
-          data-bond-yields={bond_yields && Jason.encode!(bond_yields)}>
-        </canvas>
         <script :type={Phoenix.LiveView.ColocatedHook} name=".BondChart">
           export default {
             mounted() {
@@ -429,6 +431,7 @@ defmodule WhailyWeb.PageController do
                 },
                 options: {
                   responsive: true,
+                  maintainAspectRatio: false,
                   parsing: {
                     xAxisKey: 'date',
                     yAxisKey: 'rate'
@@ -448,6 +451,13 @@ defmodule WhailyWeb.PageController do
                   }
                 }
               });
+            },
+
+            // Something about LiveView update/render prevents ChartJS from doing
+            // the right thing on initial mount
+            updated() {
+              const chart = Chart.getChart('bond_chart');
+              chart.resize();
             }
           }
         </script>
