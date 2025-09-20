@@ -14,30 +14,54 @@ defmodule WhailyWeb.PageController do
       |> fetch_buses_async()}
   end
 
+  # TODO: rewrite with `with`? Or guard clauses?
+  defp seek_value data, date, obs_index do
+    case Enum.at(data, obs_index) do
+      nil -> {%{date: date, rate: nil}, obs_index}
+      obs -> case Date.compare(obs.date, date) do
+        :lt -> seek_value(data, date, obs_index + 1)
+        :gt -> {%{date: date, rate: nil}, obs_index}
+        :eq -> {%{date: date, rate: obs.rate}, obs_index + 1}
+      end
+    end
+  end
+
+
+  defp unpack_and_interpolate(fred_response, past_days) do
+    parse_float = fn value ->
+      case Float.parse(value) do
+        {val, _} -> val
+        :error -> nil
+      end
+    end
+
+    data = fred_response["observations"]
+           |> Enum.map(&(
+             %{date: Date.from_iso8601!(&1["date"]),
+               rate: parse_float.(&1["value"])}
+           ))
+           |> Enum.reverse
+
+    # Create the date range we *want* and populate values where we *can*
+    latest_date = Enum.at(data, -1).date
+    Date.range(Date.add(latest_date, -past_days), latest_date)
+             |> Enum.map_reduce(0, &seek_value(data, &1, &2))
+             |> elem(0)
+  end
+
   defp fetch_econ do
     key = System.get_env("FRED_KEY")
-    # TODO: weekends are omitted, holidays are date="."; need to think on ensuring time is to scale
-    history_days = 600
-    url = ~s(https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&api_key=#{key}&file_type=json&sort_order=desc&limit=#{history_days})
+    history_days = 2 * 365
 
-    get_response = get(url, fn response ->
-      response["observations"]
-      |> Enum.map(fn observation ->
-        rate = case Float.parse(observation["value"]) do
-          {val, _} -> val
-          :error -> nil
-        end
+    # 10y Treasury Bond Yield Rates
+    bond_url = ~s(https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&api_key=#{key}&file_type=json&sort_order=desc&limit=#{history_days})
+    # 30y Fixed-rate Jumbo Mortgage Index
+    mortgage_url = ~s(https://api.stlouisfed.org/fred/series/observations?series_id=OBMMIJUMBO30YF&api_key=#{key}&file_type=json&sort_order=desc&limit=#{history_days})
 
-        %{
-          date: observation["date"],
-          rate: rate}
-      end)
-      |> Enum.reverse
-    end)
-
-    case get_response do
-      {:ok, result} -> {:ok, %{economy: result}}
-      {:error, error} -> {:error, error}
+    # TODO: confirm whether Elixir/BEAM make these async on our behalf
+    with {:ok, bond_result} <- get(bond_url, &unpack_and_interpolate(&1, history_days)),
+         {:ok, mortgage_result} <- get(mortgage_url, &unpack_and_interpolate(&1, history_days)) do
+      {:ok, %{economy: %{bond_rates: bond_result, mortgage_rates: mortgage_result}}}
     end
   end
 
@@ -402,7 +426,7 @@ defmodule WhailyWeb.PageController do
 
     <!-- [date, rate] -->
     <div class="section">
-      <h2>10y Treasury Bonds and 30y Jumbo Mortgages</h2>
+      <h2><span style="color: #36a2eb">10y Treasury Bonds</span> and <span style="color: #ff6384">30y Jumbo Mortgages</span></h2>
       <div class="card bg-yellow-100">
       <.async_result :let={economy} assign={@economy}>
         <:loading>calculating rates...</:loading>
@@ -424,9 +448,15 @@ defmodule WhailyWeb.PageController do
                 type: 'line',
                 data: {
                   datasets: [{
-                    data: data,
+                    data: data.bond_rates,
                     cubicInterpolationMode: 'monotone',
-                    spanGaps: true
+                    spanGaps: true,
+                    yAxisID: 'y_bond'
+                  }, {
+                    data: data.mortgage_rates,
+                    cubicInterpolationMode: 'monotone',
+                    spanGaps: true,
+                    yAxisID: 'y_mortgage'
                   }]
                 },
                 options: {
@@ -445,8 +475,19 @@ defmodule WhailyWeb.PageController do
                   scales: {
                     x: {
                       ticks: {
-                        callback: function(value, index) { return data[index].date.substring(5) }
+                        callback: function(value, index) { return data.bond_rates[index].date.substring(5); }
                       }
+                    },
+                    y_bond: {
+                      type: 'linear',
+                      position: 'left',
+                      ticks: { color: '#36a2eb' },
+                      grid: { drawOnChartArea: false }
+                    },
+                    y_mortgage: {
+                      type: 'linear',
+                      position: 'right',
+                      ticks: { color: '#ff6384' }
                     }
                   }
                 }
