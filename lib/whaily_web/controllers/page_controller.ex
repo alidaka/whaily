@@ -10,11 +10,11 @@ defmodule WhailyWeb.PageController do
       |> assign_async(:trucks, fn -> fetch_truck() end)
       |> assign_async(:weather, fn -> fetch_weather() end)
       |> assign_async(:beers, fn -> fetch_beers() end)
-      |> assign_async(:bond_yields, fn -> fetch_bond_yields() end)
+      |> assign_async(:economy, fn -> fetch_econ() end)
       |> fetch_buses_async()}
   end
 
-  defp fetch_bond_yields do
+  defp fetch_econ do
     key = System.get_env("FRED_KEY")
     # TODO: weekends are omitted, holidays are date="."; need to think on ensuring time is to scale
     history_days = 600
@@ -36,7 +36,7 @@ defmodule WhailyWeb.PageController do
     end)
 
     case get_response do
-      {:ok, result} -> {:ok, %{bond_yields: result}}
+      {:ok, result} -> {:ok, %{economy: result}}
       {:error, error} -> {:error, error}
     end
   end
@@ -402,23 +402,23 @@ defmodule WhailyWeb.PageController do
 
     <!-- [date, rate] -->
     <div class="section">
-      <h2>10y Treasury Bond Yield Rates</h2>
+      <h2>10y Treasury Bonds and 30y Jumbo Mortgages</h2>
       <div class="card bg-yellow-100">
-      <.async_result :let={bond_yields} assign={@bond_yields}>
+      <.async_result :let={economy} assign={@economy}>
         <:loading>calculating rates...</:loading>
         <:failed :let={failure}>error: <%= inspect failure %></:failed>
 
         <div class="w-[80vw]">
-          <canvas id="bond_chart"
-            phx-hook=".BondChart"
-            data-bond-yields={bond_yields && Jason.encode!(bond_yields)}>
+          <canvas id="economic_chart"
+            phx-hook=".EconomicChart"
+            data-econ={economy && Jason.encode!(economy)}>
           </canvas>
         </div>
 
-        <script :type={Phoenix.LiveView.ColocatedHook} name=".BondChart">
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".EconomicChart">
           export default {
             mounted() {
-              const data = JSON.parse(this.el.dataset.bondYields);
+              const data = JSON.parse(this.el.dataset.econ);
 
               new Chart(this.el, {
                 type: 'line',
@@ -456,7 +456,7 @@ defmodule WhailyWeb.PageController do
             // Something about LiveView update/render prevents ChartJS from doing
             // the right thing on initial mount
             updated() {
-              const chart = Chart.getChart('bond_chart');
+              const chart = Chart.getChart('economic_chart');
               chart.resize();
             }
           }
