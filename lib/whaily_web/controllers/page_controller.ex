@@ -248,7 +248,7 @@ defmodule WhailyWeb.PageController do
     ~H"""
 
     <div class="section">
-      <h2>Weather</h2>
+      <h2><span style="color: #ff6384">Temperature</span> and <span style="color: #36a2eb">Precipitation</span></h2>
       <div class="card bg-sky-100">
         <.async_result :let={weather} assign={@weather}>
           <:loading>checking weather...</:loading>
