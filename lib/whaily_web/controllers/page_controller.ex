@@ -314,7 +314,7 @@ defmodule WhailyWeb.PageController do
                         min: labels[0],
                         max: labels.at(-1),
                         ticks: {
-                          callback: function(value, index, ticks) { return value % 24; }
+                          callback: function(value) { return value % 24; }
                         }
                       },
                       y_temp: {
@@ -322,7 +322,7 @@ defmodule WhailyWeb.PageController do
                         position: 'left',
                         ticks: {
                           color: '#ff6384',
-                          callback: function(value, index, ticks) { return value + '°'; }
+                          callback: function(value) { return value + '°'; }
                         },
                         min: Math.floor(Math.min(...data.temp) - 5),
                         max: Math.ceil(Math.max(...data.temp) + 5),
@@ -332,7 +332,7 @@ defmodule WhailyWeb.PageController do
                         position: 'right',
                         ticks: {
                           color: '#36a2eb',
-                          callback: function(value, index, ticks) { return value + '%'; }
+                          callback: function(value) { return value + '%'; }
                         },
                         grid: { drawOnChartArea: false },
                         min: 0,
