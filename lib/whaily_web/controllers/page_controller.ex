@@ -475,7 +475,7 @@ defmodule WhailyWeb.PageController do
                   scales: {
                     x: {
                       ticks: {
-                        callback: function(value, index) { return data.bond_rates[index].date.substring(5); }
+                        callback: function(value) { return this.getLabelForValue(value)?.substring(5); }
                       }
                     },
                     y_bond: {
