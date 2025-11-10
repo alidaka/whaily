@@ -341,6 +341,13 @@ defmodule WhailyWeb.PageController do
                     }
                   }
                 });
+              },
+
+              // Something about LiveView update/render prevents ChartJS from doing
+              // the right thing on initial mount
+              updated() {
+                const chart = Chart.getChart('weather_chart');
+                chart.resize();
               }
             }
           </script>
