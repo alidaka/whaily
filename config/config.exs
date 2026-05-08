@@ -53,6 +53,11 @@ config :phoenix, :json_library, Jason
 
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 
+config :opentelemetry,
+  resource: [service: [name: "whaily", version: "0.1.0"]],
+  span_processor: :batch,
+  traces_exporter: :otlp
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

@@ -7,6 +7,9 @@ defmodule Whaily.Application do
 
   @impl true
   def start(_type, _args) do
+    OpentelemetryPhoenix.setup(adapter: :bandit)
+    OpentelemetryFinch.setup()
+
     children = [
       WhailyWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:whaily, :dns_cluster_query) || :ignore},
