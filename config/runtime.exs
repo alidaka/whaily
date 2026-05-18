@@ -20,10 +20,17 @@ if System.get_env("PHX_SERVER") do
   config :whaily, WhailyWeb.Endpoint, server: true
 end
 
-if honeycomb_api_key = System.get_env("HONEYCOMB_API_KEY") do
+if honeycomb_key = System.get_env("HONEYCOMB_API_KEY") do
+  config :opentelemetry,
+    resource: [service: [name: "whaily", version: "0.1.0"]],
+    span_processor: :batch,
+    traces_exporter: :otlp
+
   config :opentelemetry_exporter,
     otlp_endpoint: "https://api.honeycomb.io",
-    otlp_headers: [{"x-honeycomb-team", honeycomb_api_key}]
+    otlp_headers: [{"x-honeycomb-team", honeycomb_key}]
+else
+  config :opentelemetry, traces_exporter: {:otel_exporter_stdout, []}
 end
 
 if config_env() == :prod do

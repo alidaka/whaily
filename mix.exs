@@ -59,10 +59,11 @@ defmodule Whaily.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:tz, "~> 0.27"},
+      {:opentelemetry_exporter, "~> 1.8"},
       {:opentelemetry, "~> 1.5"},
       {:opentelemetry_api, "~> 1.4"},
-      {:opentelemetry_exporter, "~> 1.8"},
       {:opentelemetry_phoenix, "~> 2.0"},
+      {:opentelemetry_bandit, "~> 0.3"},
       {:opentelemetry_finch, "~> 0.2"}
     ]
   end
