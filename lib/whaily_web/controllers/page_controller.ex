@@ -180,13 +180,19 @@ defmodule WhailyWeb.PageController do
   end
 
   @impl true
-  def handle_async({:bus_handler, _}, {:ok, fetched_stop}, socket) do
+  def handle_async({:bus_handler, stop}, {:ok, {:error, reason}}, socket) do
+    Logger.error "bus stop #{stop} fetch failed: #{reason}"
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_async({:bus_handler, _}, {:ok, {:ok, fetched_stop}}, socket) do
     {:noreply, stream_insert(socket, :buses, %{id: fetched_stop.stop_id, data: fetched_stop})}
   end
 
   @impl true
   def handle_async({:bus_handler, _}, {:exit, reason}, socket) do
-    Logger.error reason
+    Logger.error inspect(reason)
     {:noreply, socket}
   end
 
@@ -194,7 +200,7 @@ defmodule WhailyWeb.PageController do
     key = System.get_env("OBA_KEY")
     url = ~s(https://api.pugetsound.onebusaway.org/api/where/arrivals-and-departures-for-stop/#{stop}.json?key=#{key})
 
-    get_response = get(url, fn response ->
+    get(url, fn response ->
       stop_response = response["data"]["references"]["stops"]
                       |> Enum.find(fn s -> s["id"] == stop end)
       buses_response = response["data"]["entry"]["arrivalsAndDepartures"]
@@ -217,11 +223,6 @@ defmodule WhailyWeb.PageController do
         direction: stop_response["direction"],
         buses: Enum.map(buses_response, bus_parser)}
     end)
-
-    case get_response do
-      {:ok, result} -> result
-      {:error, error} -> {:error, error}
-    end
   end
 
   defp get(url, json_fn) do
